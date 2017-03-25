@@ -15,12 +15,98 @@
  */
 package com.evolveum.polygon.connector.example.rest;
 
+import org.identityconnectors.common.StringUtil;
+import org.identityconnectors.common.logging.Log;
+import org.identityconnectors.common.security.GuardedString;
+
+import org.identityconnectors.framework.spi.AbstractConfiguration;
+import org.identityconnectors.framework.spi.ConfigurationProperty;
+import org.identityconnectors.framework.spi.StatefulConfiguration;
+
 import com.evolveum.polygon.rest.AbstractRestConfiguration;
+
+
 
 /**
  * @author semancik
  *
  */
-public class ExampleRestConfiguration extends AbstractRestConfiguration {
+public class BoxConnectorConfiguration extends AbstractConfiguration implements StatefulConfiguration {
+
+	private String clientId;
+	private String URI;
+	private GuardedString clientSecret = null;
+	private GuardedString refreshToken = null;
+	private static final Log logger = Log.getLog(BoxConnectorConfiguration.class);
+
+	public BoxConnectorConfiguration() {
+	}
+
+	@ConfigurationProperty(order = 1, displayMessageKey = "ClientId", helpMessageKey = "Client identifier issued to the client during the registration process", required = true, confidential = false)
+
+	public String getClientId() {
+		return clientId;
+	}
+
+	public void setClientId(String clientId) {
+		this.clientId = clientId;
+	}
+	
+	@ConfigurationProperty(order = 2, displayMessageKey = "ClientSecret", helpMessageKey = "Client secret issued to the client during the registration process", required = true, confidential = false)
+
+	public GuardedString getClientSecret() {
+		return clientSecret;
+	}
+
+	public void setClientSecret(GuardedString clientSecret) {
+		this.clientSecret = clientSecret;
+	}
+	
+	@ConfigurationProperty(order = 3, displayMessageKey = "RefreshToken", helpMessageKey = "Refresh token allows you to get new access token", required = true, confidential = false)
+
+	public GuardedString getRefreshToken() {
+		return refreshToken;
+	}
+
+	public void setRefreshToken(GuardedString refreshToken) {
+		this.refreshToken = refreshToken;
+	}
+	
+	@ConfigurationProperty(order = 4, displayMessageKey = "URI", helpMessageKey = "The HTTP endpoint for Box", required = true, confidential = false)
+
+	public String getUri() {
+		return URI;
+	}
+
+	public void setUri(String URI) {
+		this.URI = URI;
+	}
+	
+	@Override
+	public void validate() {
+		
+		if (StringUtil.isBlank(clientId)) {
+            throw new IllegalArgumentException("Client Id cannot be null or empty.");
+        }
+        if (null == clientSecret) {
+            throw new IllegalArgumentException("Client Secret cannot be null or empty.");
+        }
+        if (null == refreshToken) {
+            throw new IllegalArgumentException("Refresh Token cannot be null or empty.");
+        }
+        if (null == URI) {
+            throw new IllegalArgumentException("URI cannot be null or empty.");
+        }
+	}
+	
+	@Override
+    public void release() {
+    }
+
+	
+
+	
+	
+	
 
 }

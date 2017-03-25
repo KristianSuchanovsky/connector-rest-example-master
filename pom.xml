@@ -20,11 +20,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <artifactId>connector-parent</artifactId>
-        <groupId>com.evolveum.polygon</groupId>
-        <version>1.4.2.14</version>
-        <relativePath></relativePath>
-    </parent>
+		<groupId>com.evolveum.polygon</groupId>
+		<version>1.4.2.18</version>
+		<artifactId>connector-parent</artifactId>
+	</parent>
 
     <artifactId>connector-rest-example</artifactId>
     <version>1.4.2.14-SNAPSHOT</version>
@@ -78,6 +77,12 @@
     </build>
     
     <dependencies>
+    
+        <dependency>
+			<groupId>com.evolveum.polygon</groupId>
+			<artifactId>connector-common</artifactId>
+			<version>${connId.version}</version> 
+		</dependency>
 
 		<dependency>
 			<artifactId>connector-rest</artifactId>
@@ -101,6 +106,8 @@
 			<artifactId>json</artifactId>
 			<version>20160810</version>
 		</dependency>
+		
+		
     </dependencies>
 
 </project>
