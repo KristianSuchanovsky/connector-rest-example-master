@@ -35,13 +35,11 @@ import org.json.JSONObject;
 
 public class UserHandler extends ObjectsProcessing {
 	private static final Log LOGGER = Log.getLog(UserHandler.class);
-	
+
 	public UserHandler(BoxConnectorConfiguration conf) {
 		super(conf);
 		LOGGER.info("USER", "OK");
 	}
-
-	
 
 	private static final String ATTR_LOGIN = "login";
 	private static final String ATTR_NAME = "name";
@@ -68,6 +66,8 @@ public class UserHandler extends ObjectsProcessing {
 	private static final String ATTR_CODE = "tracking_codes";
 
 	private static final String FILTERTERM = "filter_term";
+	private static final String OFFSET = "offset";
+	private static final String LIMIT = "limit";
 	private static final String CRUD = "/2.0/users";
 	private static final String UID = "id";
 	private static final String AVATAR = "avatar_url";
@@ -155,32 +155,49 @@ public class UserHandler extends ObjectsProcessing {
 		Name name = null;
 		Uid uid = null;
 		URI uri = null;
+		URIBuilder uriBuilder = getURIBuilder();
+		int pageNumber = 0;
+		int usersPerPage = 0;
+		int offset = 0;
+		
 		if (query instanceof StartsWithFilter && ((StartsWithFilter) query).getAttribute() instanceof Name) {
 			name = (Name) ((StartsWithFilter) query).getAttribute();
-			if (name != null) {
-				try {
-					uri = getURIBuilder().setPath(CRUD).addParameter(FILTERTERM, name.getNameValue()).build();
 
+			if (name != null) {
+				if (options == null) {
+					uriBuilder.addParameter(FILTERTERM, name.getNameValue());
+				} else {
+					pageNumber = options.getPagedResultsOffset();
+					usersPerPage = options.getPageSize();
+					offset = (pageNumber * usersPerPage) - usersPerPage;
+					uriBuilder.addParameter(FILTERTERM, name.getNameValue())
+							.addParameter(LIMIT, String.valueOf(usersPerPage))
+							.addParameter(OFFSET, String.valueOf(offset));
+				}
+				try {
+					uri = uriBuilder.build();
 				} catch (URISyntaxException e) {
 					StringBuilder sb = new StringBuilder();
-					sb.append("It is not possible to create URI from URIBuilder:")
-							.append(getURIBuilder().toString()).append(";").append(e.getLocalizedMessage());
+					sb.append("It is not possible to create URI from URIBuilder:").append(getURIBuilder().toString())
+							.append(";").append(e.getLocalizedMessage());
 					throw new ConnectorException(sb.toString(), e);
 				}
 				HttpGet request = new HttpGet(uri);
-				handleUsers(request, handler, options, CRUD);
+				handleUsers(request, handler, options);
 
 			}
 		} else if (query instanceof EqualsFilter && ((EqualsFilter) query).getAttribute() instanceof Uid) {
 			uid = (Uid) ((EqualsFilter) query).getAttribute();
 			if (uid != null) {
+				uriBuilder.setPath(CRUD + "/" + uid.getUidValue().toString());
+
 				try {
-					uri = getURIBuilder().setPath(CRUD + "/" + uid.getUidValue().toString()).build();
+					uri = uriBuilder.build();
 
 				} catch (URISyntaxException e) {
 					StringBuilder sb = new StringBuilder();
-					sb.append("It is not possible to create URI from URIBuilder:")
-							.append(getURIBuilder().toString()).append(";").append(e.getLocalizedMessage());
+					sb.append("It is not possible to create URI from URIBuilder:").append(getURIBuilder().toString())
+							.append(";").append(e.getLocalizedMessage());
 					throw new ConnectorException(sb.toString(), e);
 				}
 				HttpGet request = new HttpGet(uri);
@@ -191,54 +208,80 @@ public class UserHandler extends ObjectsProcessing {
 			}
 		} else if (query instanceof ContainsFilter && ((ContainsFilter) query).getAttribute() instanceof Name) {
 			name = (Name) ((StartsWithFilter) query).getAttribute();
-			if (name != null) {
-				try {
-					uri = getURIBuilder().setPath(CRUD).addParameter(FILTERTERM, name.getNameValue()).build();
 
+			if (name != null) {
+				if (options == null) {
+					uriBuilder.addParameter(FILTERTERM, name.getNameValue());
+				} else {
+					pageNumber = options.getPagedResultsOffset();
+					usersPerPage = options.getPageSize();
+					offset = (pageNumber * usersPerPage) - usersPerPage;
+					uriBuilder.addParameter(FILTERTERM, name.getNameValue())
+							.addParameter(LIMIT, String.valueOf(usersPerPage))
+							.addParameter(OFFSET, String.valueOf(offset));
+				}
+				try {
+					uri = uriBuilder.build();
 				} catch (URISyntaxException e) {
 					StringBuilder sb = new StringBuilder();
-					sb.append("It is not possible to create URI from URIBuilder:")
-							.append(getURIBuilder().toString()).append(";").append(e.getLocalizedMessage());
+					sb.append("It is not possible to create URI from URIBuilder:").append(getURIBuilder().toString())
+							.append(";").append(e.getLocalizedMessage());
 					throw new ConnectorException(sb.toString(), e);
 				}
 				HttpGet request = new HttpGet(uri);
-				handleUsers(request, handler, options, CRUD);
+				handleUsers(request, handler, options);
 
 			}
 		} else if (query instanceof ContainsAllValuesFilter
 				&& ((ContainsAllValuesFilter) query).getAttribute() instanceof Name) {
 			name = (Name) ((StartsWithFilter) query).getAttribute();
 			if (name != null) {
+				if (options == null) {
+					uriBuilder.addParameter(FILTERTERM, name.getNameValue());
+				} else {
+					pageNumber = options.getPagedResultsOffset();
+					usersPerPage = options.getPageSize();
+					offset = (pageNumber * usersPerPage) - usersPerPage;
+					uriBuilder.addParameter(FILTERTERM, name.getNameValue())
+							.addParameter(LIMIT, String.valueOf(usersPerPage))
+							.addParameter(OFFSET, String.valueOf(offset));
+				}
 				try {
-					uri = getURIBuilder().setPath(CRUD).addParameter(FILTERTERM, name.getNameValue()).build();
-
+					uri = uriBuilder.build();
 				} catch (URISyntaxException e) {
 					StringBuilder sb = new StringBuilder();
-					sb.append("It is not possible to create URI from URIBuilder:")
-							.append(getURIBuilder().toString()).append(";").append(e.getLocalizedMessage());
+					sb.append("It is not possible to create URI from URIBuilder:").append(getURIBuilder().toString())
+							.append(";").append(e.getLocalizedMessage());
 					throw new ConnectorException(sb.toString(), e);
 				}
 				HttpGet request = new HttpGet(uri);
-				handleUsers(request, handler, options, CRUD);
+				handleUsers(request, handler, options);
 
 			}
 		} else if (query == null && objectClass.is(ObjectClass.ACCOUNT_NAME)) {
+			if (options == null) {
+				uriBuilder.setPath(CRUD);
+			} else {
+				pageNumber = options.getPagedResultsOffset();
+				usersPerPage = options.getPageSize();
+				offset = (pageNumber * usersPerPage) - usersPerPage;
+				uriBuilder.setPath(CRUD).addParameter(LIMIT, String.valueOf(usersPerPage)).addParameter(OFFSET,
+						String.valueOf(offset));
+			}
 			try {
-				uri = getURIBuilder().setPath(CRUD).build();
-
+				uri = uriBuilder.build();
 			} catch (URISyntaxException e) {
 				StringBuilder sb = new StringBuilder();
-				sb.append("It is not possible to create URI from URIBuilder:")
-						.append(getURIBuilder().toString()).append(";").append(e.getLocalizedMessage());
+				sb.append("It is not possible to create URI from URIBuilder:").append(getURIBuilder().toString())
+						.append(";").append(e.getLocalizedMessage());
 				throw new ConnectorException(sb.toString(), e);
 			}
 			HttpGet request = new HttpGet(uri);
-			handleUsers(request, handler, options, CRUD);
+			handleUsers(request, handler, options);
 		}
 	}
 
-	private boolean handleUsers(HttpGet request, ResultsHandler handler, OperationOptions options,
-			String object) {
+	private boolean handleUsers(HttpGet request, ResultsHandler handler, OperationOptions options) {
 		if (request == null) {
 			LOGGER.error("Request value not provided {0} ", request);
 			throw new InvalidAttributeValueException("Request value not provided");
@@ -284,6 +327,7 @@ public class UserHandler extends ObjectsProcessing {
 			LOGGER.error("Attributes not provided {0} ", attributes);
 			return uid;
 		}
+		LOGGER.info("Create", "OK");
 		boolean create = uid == null;
 		JSONObject json = new JSONObject();
 		// required attribute e-mail
@@ -324,20 +368,22 @@ public class UserHandler extends ObjectsProcessing {
 		putFieldIfExists(attributes, ATTR_USED, json);
 		HttpEntityEnclosingRequestBase request = null;
 		URI uri = null;
+		LOGGER.info("Create", "OK");
 		if (create) {
 			try {
-				
+				LOGGER.info("Create", "OK");
 				URIBuilder uriBuilder = getURIBuilder();
+				LOGGER.info("Create", "OK");
 				uri = uriBuilder.setPath(CRUD).build();
 				LOGGER.info("URI {0}", uri);
 			} catch (URISyntaxException e) {
 				StringBuilder sb = new StringBuilder();
-				sb.append("It is not possible to create URI from URIBuilder:")
-						.append(getURIBuilder().toString()).append(";").append(e.getLocalizedMessage());
+				sb.append("It is not possible to create URI from URIBuilder:").append(getURIBuilder().toString())
+						.append(";").append(e.getLocalizedMessage());
 				throw new ConnectorException(sb.toString(), e);
 			}
 			request = new HttpPost(uri);
-
+			LOGGER.info("Create", "OK");
 		} else {
 			// update
 
@@ -345,13 +391,14 @@ public class UserHandler extends ObjectsProcessing {
 				uri = getURIBuilder().setPath(CRUD + "/" + uid.getUidValue().toString()).build();
 			} catch (URISyntaxException e) {
 				StringBuilder sb = new StringBuilder();
-				sb.append("It is not possible to create URI from URIBuilder:")
-						.append(getURIBuilder().toString()).append(";").append(e.getLocalizedMessage());
+				sb.append("It is not possible to create URI from URIBuilder:").append(getURIBuilder().toString())
+						.append(";").append(e.getLocalizedMessage());
 				throw new ConnectorException(sb.toString(), e);
 			}
 
 			request = new HttpPut(uri);
 		}
+		LOGGER.info("Create", "OK");
 		JSONObject jsonReq = callRequest(request, json);
 
 		String newUid = jsonReq.getString(UID);
@@ -360,7 +407,7 @@ public class UserHandler extends ObjectsProcessing {
 		return new Uid(newUid);
 	}
 
-	public  ConnectorObject convertToConnectorObject(JSONObject json) {
+	public ConnectorObject convertToConnectorObject(JSONObject json) {
 		ConnectorObjectBuilder builder = new ConnectorObjectBuilder();
 
 		builder.setUid(new Uid(json.getString(UID)));

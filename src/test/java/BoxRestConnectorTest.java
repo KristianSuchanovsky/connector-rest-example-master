@@ -1,5 +1,7 @@
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 
@@ -10,9 +12,11 @@ import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 import org.identityconnectors.framework.common.objects.Attribute;
 import org.identityconnectors.framework.common.objects.ObjectClass;
+import org.identityconnectors.framework.common.objects.OperationOptions;
 import org.identityconnectors.framework.common.objects.SearchResult;
 import org.identityconnectors.framework.common.objects.Uid;
 import org.identityconnectors.framework.common.objects.filter.AttributeFilter;
+import org.identityconnectors.framework.common.objects.filter.ContainsFilter;
 import org.identityconnectors.framework.common.objects.filter.EqualsFilter;
 import org.identityconnectors.framework.common.objects.filter.FilterBuilder;
 import org.identityconnectors.framework.common.objects.filter.StartsWithFilter;
@@ -47,7 +51,8 @@ public class BoxRestConnectorTest {
 		 BoxConnectorConfiguration conf =new BoxConnectorConfiguration();
 		
 		 GuardedString clientSecret = new GuardedString(new String("L9SzKgeLU28jFzmmhYEAabqxEWTmcDT4").toCharArray());
-		 GuardedString refreshToken = new GuardedString(new String("Q0N0gAmd1xaXMNuFQHiCPEhQUIlhpdvbPzrRXK3RC8unrXwVsQSMts1l4KwgdCo5").toCharArray());
+		 GuardedString refreshToken = new GuardedString(new String("nscvBWpqJZO8wsu9a8wVZNDxK6umqKpSq7aCihp3WrcguOxWcCsYSG3oBJEOsiXi").toCharArray());
+		 GuardedString accessToken = new GuardedString(new String("siSQ5QAYkIWeVcqMnHxqwu9GKZdR1cUh").toCharArray());
 	
 		 /*ObjectClass object = new ObjectClass("Collaborations");
 		 Set<Attribute> attributes = new HashSet<Attribute>();
@@ -64,27 +69,34 @@ public class BoxRestConnectorTest {
 		 
 		 /*ObjectClass object = new ObjectClass("__ACCOUNT__");
 		 Set<Attribute> attributes = new HashSet<Attribute>();
-		 attributes.add(AttributeBuilder.build("login","Matus@evo.com"));
-		 attributes.add(AttributeBuilder.build("__NAME__", "Matus Evolveum"));*/
+		 attributes.add(AttributeBuilder.build("login","Miro@evo.com"));
+		 attributes.add(AttributeBuilder.build("__NAME__", "Miro Evolveum"));*/
 		 
-		 /*ObjectClass object = new ObjectClass("__GROUP__");
+		 ObjectClass object = new ObjectClass("__GROUP__");
 		 Set<Attribute> attributes = new HashSet<Attribute>();
-		 attributes.add(AttributeBuilder.build("__NAME__", "EastcubatorGroup"));*/
+		 attributes.add(AttributeBuilder.build("__NAME__", "EastcubatorGroup"));
 		 
-		 ObjectClass object = new ObjectClass("Membership");
+		 /*ObjectClass object = new ObjectClass("Membership");
 		 Set<Attribute> attributes = new HashSet<Attribute>();
 		 attributes.add(AttributeBuilder.build("user.id", "1311377537"));
 		 attributes.add(AttributeBuilder.build("group.id", "143246148"));
-		 attributes.add(AttributeBuilder.build("role", "admin"));
+		 attributes.add(AttributeBuilder.build("role", "admin"));*/
 		 
+		 Map operationOptions = new HashMap();
+		 operationOptions.put("ALLOW_PARTIAL_ATTRIBUTE_VALUES", true);  
+		 operationOptions.put(OperationOptions.OP_PAGED_RESULTS_OFFSET, 1);  
+		 operationOptions.put(OperationOptions.OP_PAGE_SIZE, 3);  
+		 OperationOptions options = new OperationOptions(operationOptions);
 		
 		 conf.setClientId("4ig3tzk76msrvvvpradguxsxuz7lsuhr");
 		 conf.setClientSecret(clientSecret);
 		 conf.setRefreshToken(refreshToken);
 		 conf.setUri("api.box.com");
+		 conf.setAccessToken(accessToken);
 		 
-		 //connector.init(conf);
-		 //connector.test();
+		 
+		 connector.init(conf);
+		 // connector.test();
 		 // folder Ceresnicka Id 21731126767
 		 // folder Eastcubator Id 21735961057
 		 // user Lukas Evolveum Id 1288909013
@@ -98,17 +110,20 @@ public class BoxRestConnectorTest {
 		 // folder ESET Id 22218922123
 		 // collab Matus - 21.03.2017 Id 3793668509
 		 // member Matus - EastcubatorGroup Id 1163197315
-		 //Uid uid = new Uid("1163197315");
-		 //connector.update(object,uid , attributes, null);
-		 //connector.create(object, attributes, null);
-		 //connector.delete(object, uid, null);
+		 // Uid uid = new Uid("1163197315");
+		 // connector.update(object,uid , attributes, null);
+		 // connector.create(object, attributes, null);
+		 // connector.delete(object, uid, null);
 		 
-		/*AttributeFilter swfilter = (StartsWithFilter) FilterBuilder.startsWith(AttributeBuilder.build("__NAME__", "E"));
-		//connector.executeQuery(object, swfilter, handler, null);*/
-		//connector.executeQuery(object, null, handler, null);
+		AttributeFilter swfilter = (StartsWithFilter) FilterBuilder.startsWith(AttributeBuilder.build("__NAME__", "F"));
+		//connector.executeQuery(object, swfilter, handler, options);
+		connector.executeQuery(object, null, handler, null);
 
 		/*AttributeFilter eqfilter = (EqualsFilter) FilterBuilder.equalTo(AttributeBuilder.build("__UID__", " "));
 		connector.executeQuery(object, eqfilter, handler, null);*/
+		
+		/*AttributeFilter cofilter = (ContainsFilter) FilterBuilder.contains(AttributeBuilder.build("__NAME__", "E"));
+		connector.executeQuery(object, cofilter, handler, null);*/
 		
 		  }
 	

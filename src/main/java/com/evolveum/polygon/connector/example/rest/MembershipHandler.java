@@ -133,8 +133,7 @@ public class MembershipHandler extends ObjectsProcessing {
 			name = (Name) ((StartsWithFilter) query).getAttribute();
 			if (name != null) {
 				try {
-					uri = getURIBuilder().setPath(CRUD_MEMBER).addParameter(FILTERTERM, name.getNameValue())
-							.build();
+					uri = getURIBuilder().setPath(CRUD_MEMBER).build();
 
 				} catch (URISyntaxException e) {
 					StringBuilder sb = new StringBuilder();
@@ -144,6 +143,7 @@ public class MembershipHandler extends ObjectsProcessing {
 				}
 				HttpGet request = new HttpGet(uri);
 				handleMembers(request, handler, options, CRUD_MEMBER);
+				
 			}
 
 		} else if (query instanceof ContainsAllValuesFilter
@@ -179,6 +179,8 @@ public class MembershipHandler extends ObjectsProcessing {
 		}
 
 	}
+	
+	
 
 	private boolean handleMembers(HttpGet request, ResultsHandler handler, OperationOptions options,
 			String object) {
@@ -205,6 +207,8 @@ public class MembershipHandler extends ObjectsProcessing {
 
 		return false;
 	}
+	
+	
 
 	public void delete(ObjectClass objectClass, Uid uid, OperationOptions operationOptions) {
 		HttpDelete request;

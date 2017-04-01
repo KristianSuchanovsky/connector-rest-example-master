@@ -357,7 +357,6 @@ public class BoxConnector
 		this.configuration = (BoxConnectorConfiguration) configuration;
 		this.configuration.validate();
 		this.uri = new URIBuilder().setScheme("https").setHost(this.configuration.getUri());
-		LOG.info("URI {0}", this.uri.toString());
 	}
 
 	@Override

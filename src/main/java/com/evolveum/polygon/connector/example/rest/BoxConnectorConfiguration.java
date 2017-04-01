@@ -16,14 +16,12 @@
 package com.evolveum.polygon.connector.example.rest;
 
 import org.identityconnectors.common.StringUtil;
-import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.common.security.GuardedString;
 
 import org.identityconnectors.framework.spi.AbstractConfiguration;
 import org.identityconnectors.framework.spi.ConfigurationProperty;
 import org.identityconnectors.framework.spi.StatefulConfiguration;
 
-import com.evolveum.polygon.rest.AbstractRestConfiguration;
 
 
 
@@ -37,7 +35,8 @@ public class BoxConnectorConfiguration extends AbstractConfiguration implements 
 	private String URI;
 	private GuardedString clientSecret = null;
 	private GuardedString refreshToken = null;
-	private static final Log logger = Log.getLog(BoxConnectorConfiguration.class);
+	private GuardedString accessToken = null;
+	
 
 	public BoxConnectorConfiguration() {
 	}
@@ -80,6 +79,14 @@ public class BoxConnectorConfiguration extends AbstractConfiguration implements 
 
 	public void setUri(String URI) {
 		this.URI = URI;
+	}
+	
+	public GuardedString getAccessToken() {
+		return accessToken;
+	}
+	
+	public void setAccessToken(GuardedString accessToken) {
+		this.accessToken = accessToken;
 	}
 	
 	@Override

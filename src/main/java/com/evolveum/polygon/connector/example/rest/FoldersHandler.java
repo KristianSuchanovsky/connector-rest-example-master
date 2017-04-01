@@ -47,7 +47,6 @@ public class FoldersHandler extends ObjectsProcessing {
 	private static final String FOLDER_NAME = "Folders";
 
 	private static final String CRUD_FOLDER = "/2.0/folders";
-	private static final String FILTERTERM = "filter_term";
 	private static final String UID = "id";
 
 	public ObjectClassInfo getFoldersSchema() {
@@ -74,26 +73,17 @@ public class FoldersHandler extends ObjectsProcessing {
 
 	public void executeCollabQuery(ObjectClass objectClass, Filter query, ResultsHandler handler,
 			OperationOptions options) {
-		LOGGER.info("SOM TU", "OK");
-		Name name = null;
 		Uid uid = null;
 		URI uri = null;
-		if (query instanceof StartsWithFilter && ((StartsWithFilter) query).getAttribute() instanceof Name) {
-			name = (Name) ((StartsWithFilter) query).getAttribute();
-			if (name != null) {
-				try {
-					uri = getURIBuilder().setPath(CRUD_FOLDER).addParameter(FILTERTERM, name.getNameValue()).build();
+		
+		if (query instanceof StartsWithFilter) {
 
-				} catch (URISyntaxException e) {
-					StringBuilder sb = new StringBuilder();
-					sb.append("It is not possible to create URI from URIBuilder:").append(getURIBuilder().toString())
-							.append(";").append(e.getLocalizedMessage());
-					throw new ConnectorException(sb.toString(), e);
-				}
-				HttpGet request = new HttpGet(uri);
-				handleFolders(request, handler, options, CRUD_FOLDER);
-			}
+			StringBuilder sb = new StringBuilder();
+			sb.append("Method not allowed: ").append((query).getClass().getSimpleName().toString()).append(";");
+			throw new ConnectorException(sb.toString());
+
 		} else if (query instanceof EqualsFilter && ((EqualsFilter) query).getAttribute() instanceof Uid) {
+
 			uid = (Uid) ((EqualsFilter) query).getAttribute();
 			if (uid != null) {
 				try {
@@ -110,67 +100,23 @@ public class FoldersHandler extends ObjectsProcessing {
 				ConnectorObject connectorObject = convertToConnectorObject(folder);
 				handler.handle(connectorObject);
 			}
-		} else if (query instanceof ContainsFilter && ((ContainsFilter) query).getAttribute() instanceof Name) {
-			name = (Name) ((StartsWithFilter) query).getAttribute();
-			if (name != null) {
-				try {
-					uri = getURIBuilder().setPath(CRUD_FOLDER).addParameter(FILTERTERM, name.getNameValue()).build();
 
-				} catch (URISyntaxException e) {
-					StringBuilder sb = new StringBuilder();
-					sb.append("It is not possible to create URI from URIBuilder:").append(getURIBuilder().toString())
-							.append(";").append(e.getLocalizedMessage());
-					throw new ConnectorException(sb.toString(), e);
-				}
-				HttpGet request = new HttpGet(uri);
-				handleFolders(request, handler, options, CRUD_FOLDER);
-			}
-		} else if (query instanceof ContainsAllValuesFilter
-				&& ((ContainsAllValuesFilter) query).getAttribute() instanceof Name) {
-			name = (Name) ((StartsWithFilter) query).getAttribute();
-			if (name != null) {
-				try {
-					uri = getURIBuilder().setPath(CRUD_FOLDER).addParameter(FILTERTERM, name.getNameValue()).build();
+		} else if (query instanceof ContainsFilter) {
+			String attrValue = ((ContainsFilter) query).getAttribute().getValue().get(0).toString();
+			String attrName = getAttrName(query);
+			uid = new Uid("0");
+			substringFiltering(handler, options, attrName, attrValue, uid);
 
-				} catch (URISyntaxException e) {
-					StringBuilder sb = new StringBuilder();
-					sb.append("It is not possible to create URI from URIBuilder:").append(getURIBuilder().toString())
-							.append(";").append(e.getLocalizedMessage());
-					throw new ConnectorException(sb.toString(), e);
-				}
-				HttpGet request = new HttpGet(uri);
-				handleFolders(request, handler, options, CRUD_FOLDER);
-			}
+		} else if (query instanceof ContainsAllValuesFilter) {
+
+			StringBuilder sb = new StringBuilder();
+			sb.append("Method not allowed: ").append((query).getClass().getSimpleName().toString()).append(";");
+			throw new ConnectorException(sb.toString());
+
 		} else if (query == null && objectClass.is(FOLDER_NAME)) {
-			LOGGER.info("SOM TU", "OK");
 			handlerJson(handler, new Uid("0"));
-			
-		}
-	}
-
-	private boolean handleFolders(HttpGet request, ResultsHandler handler, OperationOptions options, String object) {
-		if (request == null) {
-			LOGGER.error("Request value not provided {0} ", request);
-			throw new InvalidAttributeValueException("Request value not provided");
-		}
-
-		JSONObject result = callRequest(request);
-		LOGGER.info("JSON {0}", result);
-		JSONArray folders = result.getJSONArray("entries");
-
-		for (int i = 0; i < folders.length(); i++) {
-			JSONObject folder = folders.getJSONObject(i);
-			LOGGER.ok("response body Handle user: {0}", folder);
-
-			ConnectorObject connectorObject = convertToConnectorObject(folder);
-			boolean finish = !handler.handle(connectorObject);
-			if (finish) {
-				return true;
-			}
 
 		}
-
-		return false;
 	}
 
 	private void handlerJson(ResultsHandler handler, Uid uid) {
@@ -186,11 +132,9 @@ public class FoldersHandler extends ObjectsProcessing {
 		}
 		HttpGet request = new HttpGet(uri);
 		JSONObject result = callRequest(request, true);
-		LOGGER.info("JSON {0}", result);
 		if (result.has("item_collection")) {
 			JSONObject collection = result.getJSONObject("item_collection");
 			JSONArray array = collection.getJSONArray("entries");
-
 			for (int i = 0; i < array.length(); i++) {
 				JSONObject folder = array.getJSONObject(i);
 				handlerJson(handler, new Uid(String.valueOf(folder.get("id"))));
@@ -201,11 +145,61 @@ public class FoldersHandler extends ObjectsProcessing {
 		} else {
 			ConnectorObject connectorObject = convertToConnectorObject(result);
 			handler.handle(connectorObject);
-			
+
 		}
+	}
 
-		
+	private boolean substringFiltering(ResultsHandler handler, OperationOptions options, String attrName,
+			String subValue, Uid uid) {
+		URI uri = null;
+		try {
+			uri = getURIBuilder().setPath(CRUD_FOLDER + "/" + uid.getUidValue().toString()).build();
 
+		} catch (URISyntaxException e) {
+			StringBuilder sb = new StringBuilder();
+			sb.append("It is not possible to create URI from URIBuilder:").append(getURIBuilder().toString())
+					.append(";").append(e.getLocalizedMessage());
+			throw new ConnectorException(sb.toString(), e);
+		}
+		HttpGet request = new HttpGet(uri);
+		JSONObject result = callRequest(request, true);
+		if (result.has("item_collection")) {
+			JSONObject collection = result.getJSONObject("item_collection");
+			JSONArray array = collection.getJSONArray("entries");
+			for (int i = 0; i < array.length(); i++) {
+				JSONObject folder = array.getJSONObject(i);
+				substringFiltering(handler, options, attrName, subValue, new Uid(String.valueOf(folder.get("id"))));
+				if (!folder.has(attrName)) {
+					LOGGER.warn("\n\tProcessing JSON Object does not contain attribute {0}.", attrName);
+					return false;
+				}
+
+				if (folder.has(attrName) && (folder.get(attrName)).toString().contains(subValue)) {
+
+					ConnectorObject connectorObject = convertToConnectorObject(folder);
+					boolean finish = !handler.handle(connectorObject);
+					if (finish) {
+						return true;
+					}
+				}
+
+			}
+			return false;
+		} else {
+			if (!result.has(attrName)) {
+				LOGGER.warn("\n\tProcessing JSON Object does not contain attribute {0}.", attrName);
+				return false;
+			}
+			if (result.has(attrName) && (result.get(attrName)).toString().contains(subValue)) {
+				ConnectorObject connectorObject = convertToConnectorObject(result);
+				boolean finish = !handler.handle(connectorObject);
+				if (finish) {
+					return true;
+				}
+			}
+
+		}
+		return false;
 	}
 
 	public void delete(ObjectClass objectClass, Uid uid, OperationOptions operationOptions) {
@@ -303,6 +297,14 @@ public class FoldersHandler extends ObjectsProcessing {
 		ConnectorObject connectorObject = builder.build();
 		LOGGER.ok("convertUserToConnectorObject,\n\tconnectorObject: {0}", connectorObject);
 		return connectorObject;
+	}
+
+	private String getAttrName(Filter query) {
+		if (((ContainsFilter) query).getAttribute() instanceof Name) {
+			return "name";
+		} else
+			return ((ContainsFilter) query).getAttribute().getName();
+
 	}
 
 }

@@ -9,6 +9,7 @@ import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.utils.URIBuilder;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
@@ -32,7 +33,7 @@ import org.identityconnectors.framework.common.objects.filter.StartsWithFilter;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-public class GroupHandler extends ObjectsProcessing{
+public class GroupHandler extends ObjectsProcessing {
 
 	public GroupHandler(BoxConnectorConfiguration conf) {
 		super(conf);
@@ -51,9 +52,9 @@ public class GroupHandler extends ObjectsProcessing{
 	private static final String ATTR_SYNC = "is_sync_enabled";
 
 	private static final String CRUD_GROUP = "/2.0/groups";
-	private static final String FILTERTERM = "filter_term";
+	private static final String OFFSET = "offset";
+	private static final String LIMIT = "limit";
 	private static final String UID = "id";
-
 
 	public ObjectClassInfo getGroupSchema() {
 		ObjectClassInfoBuilder builder = new ObjectClassInfoBuilder();
@@ -92,34 +93,30 @@ public class GroupHandler extends ObjectsProcessing{
 
 	public void executeCollabQuery(ObjectClass objectClass, Filter query, ResultsHandler handler,
 			OperationOptions options) {
-		Name name = null;
 		Uid uid = null;
 		URI uri = null;
-		if (query instanceof StartsWithFilter && ((StartsWithFilter) query).getAttribute() instanceof Name) {
-			name = (Name) ((StartsWithFilter) query).getAttribute();
-			if (name != null) {
-				try {
-					uri = getURIBuilder().setPath(CRUD_GROUP).setParameter(FILTERTERM, name.getNameValue())
-							.build();
-				} catch (URISyntaxException e) {
-					StringBuilder sb = new StringBuilder();
-					sb.append("It is not possible to create URI from URIBuilder:")
-							.append(getURIBuilder().toString()).append(";").append(e.getLocalizedMessage());
-					throw new ConnectorException(sb.toString(), e);
-				}
-				HttpGet request = new HttpGet(uri);
-				handleGroups(request, handler, options, CRUD_GROUP);
-			}
+		URIBuilder uriBuilder = getURIBuilder();
+		int pageNumber = 0;
+		int usersPerPage = 0;
+		int offset = 0;
+		
+		if (query instanceof StartsWithFilter) {
+
+			StringBuilder sb = new StringBuilder();
+			sb.append("Method not allowed: ").append((query).getClass().getSimpleName().toString()).append(";");
+			throw new ConnectorException(sb.toString());
+
 		} else if (query instanceof EqualsFilter && ((EqualsFilter) query).getAttribute() instanceof Uid) {
 			uid = (Uid) ((EqualsFilter) query).getAttribute();
 			if (uid != null) {
+				uriBuilder.setPath(CRUD_GROUP + "/" + uid.getUidValue().toString());
 				try {
-					uri = getURIBuilder().setPath(CRUD_GROUP + "/" + uid.getUidValue().toString()).build();
+					uri = uriBuilder.build();
 
 				} catch (URISyntaxException e) {
 					StringBuilder sb = new StringBuilder();
-					sb.append("It is not possible to create URI from URIBuilder:")
-							.append(getURIBuilder().toString()).append(";").append(e.getLocalizedMessage());
+					sb.append("It is not possible to create URI from URIBuilder:").append(getURIBuilder().toString())
+							.append(";").append(e.getLocalizedMessage());
 					throw new ConnectorException(sb.toString(), e);
 				}
 				HttpGet request = new HttpGet(uri);
@@ -129,45 +126,55 @@ public class GroupHandler extends ObjectsProcessing{
 
 			}
 
-		} else if (query instanceof ContainsFilter && ((ContainsFilter) query).getAttribute() instanceof Name) {
-			name = (Name) ((StartsWithFilter) query).getAttribute();
-			if (name != null) {
+		} else if (query instanceof ContainsFilter) {
+			String attrValue = ((ContainsFilter) query).getAttribute().getValue().get(0).toString();
+			String attrName = getAttrName(query);
+			if (attrValue != null) {
+				if (options == null) {
+					uriBuilder.setPath(CRUD_GROUP);
+				} else {
+					pageNumber = options.getPagedResultsOffset();
+					usersPerPage = options.getPageSize();
+					offset = (pageNumber * usersPerPage) - usersPerPage;
+					uriBuilder.setPath(CRUD_GROUP)
+							.addParameter(LIMIT, String.valueOf(usersPerPage))
+							.addParameter(OFFSET, String.valueOf(offset));
+				}
 				try {
-					uri = getURIBuilder().setPath(CRUD_GROUP).setParameter(FILTERTERM, name.getNameValue())
-							.build();
+					uri = uriBuilder.build();
 				} catch (URISyntaxException e) {
 					StringBuilder sb = new StringBuilder();
-					sb.append("It is not possible to create URI from URIBuilder:")
-							.append(getURIBuilder().toString()).append(";").append(e.getLocalizedMessage());
+					sb.append("It is not possible to create URI from URIBuilder:").append(getURIBuilder().toString())
+							.append(";").append(e.getLocalizedMessage());
 					throw new ConnectorException(sb.toString(), e);
 				}
 				HttpGet request = new HttpGet(uri);
-				handleGroups(request, handler, options, CRUD_GROUP);
+				substringFiltering(request, handler, options, attrName, attrValue);
 			}
-		} else if (query instanceof ContainsAllValuesFilter
-				&& ((ContainsAllValuesFilter) query).getAttribute() instanceof Name) {
-			name = (Name) ((StartsWithFilter) query).getAttribute();
-			if (name != null) {
-				try {
-					uri = getURIBuilder().setPath(CRUD_GROUP).setParameter(FILTERTERM, name.getNameValue())
-							.build();
-				} catch (URISyntaxException e) {
-					StringBuilder sb = new StringBuilder();
-					sb.append("It is not possible to create URI from URIBuilder:")
-							.append(getURIBuilder().toString()).append(";").append(e.getLocalizedMessage());
-					throw new ConnectorException(sb.toString(), e);
-				}
-				HttpGet request = new HttpGet(uri);
-				handleGroups(request, handler, options, CRUD_GROUP);
-			}
+		} else if (query instanceof ContainsAllValuesFilter) {
+
+			StringBuilder sb = new StringBuilder();
+			sb.append("Method not allowed: ").append((query).getClass().getSimpleName().toString()).append(";");
+			throw new ConnectorException(sb.toString());
+
 		} else if (query == null && objectClass.is(ObjectClass.GROUP_NAME)) {
+			if (options == null) {
+				uriBuilder.setPath(CRUD_GROUP);
+			} else {
+				pageNumber = options.getPagedResultsOffset();
+				usersPerPage = options.getPageSize();
+				offset = (pageNumber * usersPerPage) - usersPerPage;
+				uriBuilder.setPath(CRUD_GROUP)
+						.addParameter(LIMIT, String.valueOf(usersPerPage))
+						.addParameter(OFFSET, String.valueOf(offset));
+			}
 			try {
-				uri = getURIBuilder().setPath(CRUD_GROUP).build();
+				uri = uriBuilder.build();
 
 			} catch (URISyntaxException e) {
 				StringBuilder sb = new StringBuilder();
-				sb.append("It is not possible to create URI from URIBuilder:")
-						.append(getURIBuilder().toString()).append(";").append(e.getLocalizedMessage());
+				sb.append("It is not possible to create URI from URIBuilder:").append(getURIBuilder().toString())
+						.append(";").append(e.getLocalizedMessage());
 				throw new ConnectorException(sb.toString(), e);
 			}
 			HttpGet request = new HttpGet(uri);
@@ -175,8 +182,7 @@ public class GroupHandler extends ObjectsProcessing{
 		}
 	}
 
-	private boolean handleGroups(HttpGet request, ResultsHandler handler, OperationOptions options,
-			String object) {
+	private boolean handleGroups(HttpGet request, ResultsHandler handler, OperationOptions options, String object) {
 		if (request == null) {
 			LOGGER.error("Request value not provided {0} ", request);
 			throw new InvalidAttributeValueException("Request value not provided");
@@ -249,8 +255,8 @@ public class GroupHandler extends ObjectsProcessing{
 				LOGGER.info("URI", uri);
 			} catch (URISyntaxException e) {
 				StringBuilder sb = new StringBuilder();
-				sb.append("It is not possible to create URI from URIBuilder:")
-						.append(getURIBuilder().toString()).append(";").append(e.getLocalizedMessage());
+				sb.append("It is not possible to create URI from URIBuilder:").append(getURIBuilder().toString())
+						.append(";").append(e.getLocalizedMessage());
 				throw new ConnectorException(sb.toString(), e);
 			}
 			request = new HttpPost(uri);
@@ -260,8 +266,8 @@ public class GroupHandler extends ObjectsProcessing{
 				uri = getURIBuilder().setPath(CRUD_GROUP + "/" + uid.getUidValue().toString()).build();
 			} catch (URISyntaxException e) {
 				StringBuilder sb = new StringBuilder();
-				sb.append("It is not possible to create URI from URIBuilder:")
-						.append(getURIBuilder().toString()).append(";").append(e.getLocalizedMessage());
+				sb.append("It is not possible to create URI from URIBuilder:").append(getURIBuilder().toString())
+						.append(";").append(e.getLocalizedMessage());
 				throw new ConnectorException(sb.toString(), e);
 			}
 
@@ -292,6 +298,48 @@ public class GroupHandler extends ObjectsProcessing{
 		ConnectorObject connectorObject = builder.build();
 		LOGGER.ok("convertUserToConnectorObject,\n\tconnectorObject: {0}", connectorObject);
 		return connectorObject;
+	}
+
+	private boolean substringFiltering(HttpGet request, ResultsHandler handler, OperationOptions options,
+			String attrName, String subValue) {
+		if (request == null) {
+			LOGGER.error("Request value not provided {0} ", request);
+			throw new InvalidAttributeValueException("Request value not provided");
+		}
+		JSONObject result = callRequest(request);
+
+		JSONArray members = result.getJSONArray("entries");
+		// String attrName = attribute.getName().toString();
+		// LOGGER.info("\n\tSubstring filtering: {0} ({1})", attrName,
+		// subValue);
+		for (int i = 0; i < members.length(); i++) {
+			JSONObject member = members.getJSONObject(i);
+			if (!member.has(attrName)) {
+				LOGGER.warn("\n\tProcessing JSON Object does not contain attribute {0}.", attrName);
+				return false;
+			}
+			if (member.has(attrName) && (member.get(attrName)).toString().contains(subValue)) {
+				// LOG.ok("value: {0}, subValue: {1} - MATCH: {2}",
+				// jsonObject.get(attrName).toString(), subValue, "YES");
+				ConnectorObject connectorObject = convertToConnectorObject(member);
+				;
+				boolean finish = !handler.handle(connectorObject);
+				if (finish) {
+					return true;
+				}
+			}
+			// else LOG.ok("value: {0}, subValue: {1} - MATCH: {2}",
+			// jsonObject.getString(attrName), subValue, "NO");
+		}
+		return false;
+	}
+
+	private String getAttrName(Filter query) {
+		if (((ContainsFilter) query).getAttribute() instanceof Name) {
+			return "name";
+		} else
+			return ((ContainsFilter) query).getAttribute().getName();
+
 	}
 
 }

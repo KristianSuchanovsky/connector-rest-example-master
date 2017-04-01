@@ -37,31 +37,31 @@ import org.json.JSONObject;
 import com.evolveum.polygon.common.GuardedStringAccessor;
 
 public class ObjectsProcessing {
-	
+
 	private static final Log LOG = Log.getLog(BoxConnector.class);
 	private static final String ATTR_AVATAR = "avatar_url";
 	private static final String CONTENT_TYPE = "application/json; charset=utf-8";
 	private static final String grantType = "refresh_token";
 	private static final String TOKEN = "/oauth2/token";
-	
-	BoxConnectorConfiguration configuration; 
+
+	BoxConnectorConfiguration configuration;
 
 	private String accessToken = "";
-	
+
 	public ObjectsProcessing(BoxConnectorConfiguration conf) {
 		this.configuration = conf;
-		
-		
+
 	}
+
 	private URIBuilder uri;
 
 	protected URIBuilder getURIBuilder() {
 		this.uri = new URIBuilder().setScheme("https").setHost(configuration.getUri());
 		return this.uri;
 	}
-	
+
 	protected void getAvatarPhoto(JSONObject user, ConnectorObjectBuilder builder, String avatarURL) {
-		
+
 		String avatar = user.getString(avatarURL);
 		GuardedString refreshToken = configuration.getRefreshToken();
 		GuardedStringAccessor accessorToken = new GuardedStringAccessor();
@@ -98,7 +98,7 @@ public class ObjectsProcessing {
 		builder.addAttribute(ATTR_AVATAR, byteJPEG);
 
 	}
-	
+
 	protected void putFieldIfExists(Set<Attribute> attributes, String fieldName, JSONObject jo) {
 		String fieldValue = getStringAttr(attributes, fieldName);
 
@@ -127,17 +127,20 @@ public class ObjectsProcessing {
 			throw new ConnectorException(sb.toString(), e);
 		}
 		request.setEntity(entity);
-
+		LOG.info("Create", "OK");
 		HttpResponse response = executeRequest(request);
+		LOG.info("Create", "OK");
 		String result = null;
 		try {
+			LOG.info("Create", "OK");
 			result = EntityUtils.toString(response.getEntity());
+			LOG.info("Create", "OK");
 		} catch (org.apache.http.ParseException e) {
 			throw new ConnectorException();
 		} catch (IOException e) {
 			throw new ConnectorIOException();
 		}
-
+		LOG.info("Create", "OK");
 		return new JSONObject(result);
 	}
 
@@ -155,7 +158,7 @@ public class ObjectsProcessing {
 		} catch (IOException e) {
 			throw new ConnectorIOException();
 		}
-
+		processResponseErrors(response);
 		return new JSONObject(result);
 
 	}
@@ -186,7 +189,7 @@ public class ObjectsProcessing {
 		}
 
 	}
-	
+
 	private String refreshToken() {
 		URI uri = null;
 		GuardedString refreshToken = configuration.getRefreshToken();
@@ -194,7 +197,6 @@ public class ObjectsProcessing {
 		refreshToken.access(accessorToken);
 
 		GuardedString clientSecret = configuration.getClientSecret();
-
 		GuardedStringAccessor accessorSecret = new GuardedStringAccessor();
 		clientSecret.access(accessorSecret);
 
@@ -249,12 +251,17 @@ public class ObjectsProcessing {
 			sb.append("Not possible to get response").append(response).append(";").append(e.getLocalizedMessage());
 			throw new ConnectorIOException(sbJSON.toString(), e);
 		}
-		accessToken = "Bearer " + (String) json.get("access_token");
+		String accessTokenJson = (String) json.get("access_token");
 		String token = (String) json.get("refresh_token");
+
 		GuardedString refreshTokenSet = new GuardedString(new String(token).toCharArray());
 		configuration.setRefreshToken(refreshTokenSet);
 		LOG.info("NewToken: {0}", token);
-
+		
+		GuardedString accessTokenSet = new GuardedString(new String(accessTokenJson).toCharArray());
+		configuration.setAccessToken(accessTokenSet);
+		
+		accessToken = "Bearer "+accessTokenJson;
 		LOG.info("accessToken: {0}", accessToken);
 
 		return accessToken;
@@ -300,7 +307,7 @@ public class ObjectsProcessing {
 			builder.addAttribute(attrName, attrVal);
 		}
 	}
-	
+
 	public void processResponseErrors(CloseableHttpResponse response) {
 		int statusCode = response.getStatusLine().getStatusCode();
 		if (statusCode >= 200 && statusCode <= 299) {
@@ -340,7 +347,7 @@ public class ObjectsProcessing {
 			closeResponse(response);
 			throw new UnsupportedOperationException("Sorry, no cofee: " + message);
 		}
-		// TODO: other codes
+
 		closeResponse(response);
 		throw new ConnectorException(message);
 	}
@@ -355,21 +362,49 @@ public class ObjectsProcessing {
 	}
 
 	public CloseableHttpResponse executeRequest(HttpUriRequest request) {
-
+		GuardedString accessTokenConf = configuration.getAccessToken();
+		GuardedStringAccessor accessorToken = new GuardedStringAccessor();
+		accessTokenConf.access(accessorToken);
+		if (accessorToken.getClearString().isEmpty()) {
+			refreshToken();
+			
+		}
+			
+			String accessToken = "Bearer " + accessorToken.getClearString();
+			request.setHeader("Content-Type", CONTENT_TYPE);
+			request.addHeader("Authorization", accessToken);
+			CloseableHttpClient client = HttpClientBuilder.create().build();
+			CloseableHttpResponse response = null;
+			try {
+				response = client.execute(request);
+			} catch (IOException e) {
+				StringBuilder sb = new StringBuilder();
+				sb.append("It is not possible to execute request:").append(request.toString()).append(";")
+						.append(e.getLocalizedMessage());
+				throw new ConnectorIOException(sb.toString(), e);
+			}
+			if (response.getStatusLine().getStatusCode() == 401) {
+				return executeRequestWithRefresh(request);
+			}
+			return response;
+		
+	}
+	
+	public CloseableHttpResponse executeRequestWithRefresh(HttpUriRequest request) {
 		request.setHeader("Content-Type", CONTENT_TYPE);
+		request.removeHeaders("Authorization");
 		request.addHeader("Authorization", refreshToken());
 		CloseableHttpClient client = HttpClientBuilder.create().build();
-
 		CloseableHttpResponse response = null;
 		try {
 			response = client.execute(request);
+			
 		} catch (IOException e) {
 			StringBuilder sb = new StringBuilder();
 			sb.append("It is not possible to execute request:").append(request.toString()).append(";")
 					.append(e.getLocalizedMessage());
 			throw new ConnectorIOException(sb.toString(), e);
 		}
-
 		return response;
 	}
 
