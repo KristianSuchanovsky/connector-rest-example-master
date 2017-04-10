@@ -15,6 +15,7 @@ import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
 import org.identityconnectors.framework.common.exceptions.InvalidAttributeValueException;
 import org.identityconnectors.framework.common.objects.Attribute;
+import org.identityconnectors.framework.common.objects.AttributeBuilder;
 import org.identityconnectors.framework.common.objects.AttributeInfoBuilder;
 import org.identityconnectors.framework.common.objects.ConnectorObject;
 import org.identityconnectors.framework.common.objects.ConnectorObjectBuilder;
@@ -29,7 +30,9 @@ import org.identityconnectors.framework.common.objects.filter.ContainsAllValuesF
 import org.identityconnectors.framework.common.objects.filter.ContainsFilter;
 import org.identityconnectors.framework.common.objects.filter.EqualsFilter;
 import org.identityconnectors.framework.common.objects.filter.Filter;
+import org.identityconnectors.framework.common.objects.filter.FilterBuilder;
 import org.identityconnectors.framework.common.objects.filter.StartsWithFilter;
+import org.identityconnectors.framework.impl.api.local.operations.FilteredResultsHandler;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -38,7 +41,6 @@ public class UserHandler extends ObjectsProcessing {
 
 	public UserHandler(BoxConnectorConfiguration conf) {
 		super(conf);
-		LOGGER.info("USER", "OK");
 	}
 
 	private static final String ATTR_LOGIN = "login";
@@ -150,7 +152,7 @@ public class UserHandler extends ObjectsProcessing {
 		return userSchemaInfo;
 	}
 
-	public void executeCollabQuery(ObjectClass objectClass, Filter query, ResultsHandler handler,
+	public void executeQuery(ObjectClass objectClass, Filter query, ResultsHandler handler,
 			OperationOptions options) {
 		Name name = null;
 		Uid uid = null;
@@ -159,20 +161,28 @@ public class UserHandler extends ObjectsProcessing {
 		int pageNumber = 0;
 		int usersPerPage = 0;
 		int offset = 0;
+		if(!handler.getClass().getSimpleName().toString().equals("FilteredResultsHandler")){
+			
+		
+		LOGGER.info("ResultHandler {0} ", handler.getClass().getSimpleName().toString());
+		
 		
 		if (query instanceof StartsWithFilter && ((StartsWithFilter) query).getAttribute() instanceof Name) {
 			name = (Name) ((StartsWithFilter) query).getAttribute();
 
 			if (name != null) {
-				if (options == null) {
-					uriBuilder.addParameter(FILTERTERM, name.getNameValue());
-				} else {
-					pageNumber = options.getPagedResultsOffset();
-					usersPerPage = options.getPageSize();
-					offset = (pageNumber * usersPerPage) - usersPerPage;
-					uriBuilder.addParameter(FILTERTERM, name.getNameValue())
-							.addParameter(LIMIT, String.valueOf(usersPerPage))
-							.addParameter(OFFSET, String.valueOf(offset));
+				uriBuilder.setPath(CRUD);
+				uriBuilder.addParameter(FILTERTERM, name.getNameValue());
+				if (options != null) {
+					if ((options.getPageSize()) != null) {
+						usersPerPage = options.getPageSize();
+						uriBuilder.addParameter(LIMIT, String.valueOf(usersPerPage));
+						if (options.getPagedResultsOffset() != null) {
+							pageNumber = options.getPagedResultsOffset();
+							offset = (pageNumber * usersPerPage) - usersPerPage;
+							uriBuilder.addParameter(OFFSET, String.valueOf(offset));
+						}
+					}
 				}
 				try {
 					uri = uriBuilder.build();
@@ -183,7 +193,8 @@ public class UserHandler extends ObjectsProcessing {
 					throw new ConnectorException(sb.toString(), e);
 				}
 				HttpGet request = new HttpGet(uri);
-				handleUsers(request, handler, options);
+				
+				handleUsers(request, handler, query);
 
 			}
 		} else if (query instanceof EqualsFilter && ((EqualsFilter) query).getAttribute() instanceof Uid) {
@@ -210,15 +221,18 @@ public class UserHandler extends ObjectsProcessing {
 			name = (Name) ((StartsWithFilter) query).getAttribute();
 
 			if (name != null) {
-				if (options == null) {
-					uriBuilder.addParameter(FILTERTERM, name.getNameValue());
-				} else {
-					pageNumber = options.getPagedResultsOffset();
-					usersPerPage = options.getPageSize();
-					offset = (pageNumber * usersPerPage) - usersPerPage;
-					uriBuilder.addParameter(FILTERTERM, name.getNameValue())
-							.addParameter(LIMIT, String.valueOf(usersPerPage))
-							.addParameter(OFFSET, String.valueOf(offset));
+				uriBuilder.setPath(CRUD);
+				uriBuilder.addParameter(FILTERTERM, name.getNameValue());
+				if (options != null) {
+					if ((options.getPageSize()) != null) {
+						usersPerPage = options.getPageSize();
+						uriBuilder.addParameter(LIMIT, String.valueOf(usersPerPage));
+						if (options.getPagedResultsOffset() != null) {
+							pageNumber = options.getPagedResultsOffset();
+							offset = (pageNumber * usersPerPage) - usersPerPage;
+							uriBuilder.addParameter(OFFSET, String.valueOf(offset));
+						}
+					}
 				}
 				try {
 					uri = uriBuilder.build();
@@ -229,22 +243,25 @@ public class UserHandler extends ObjectsProcessing {
 					throw new ConnectorException(sb.toString(), e);
 				}
 				HttpGet request = new HttpGet(uri);
-				handleUsers(request, handler, options);
+				handleUsers(request, handler, query);
 
 			}
 		} else if (query instanceof ContainsAllValuesFilter
 				&& ((ContainsAllValuesFilter) query).getAttribute() instanceof Name) {
 			name = (Name) ((StartsWithFilter) query).getAttribute();
 			if (name != null) {
-				if (options == null) {
-					uriBuilder.addParameter(FILTERTERM, name.getNameValue());
-				} else {
-					pageNumber = options.getPagedResultsOffset();
-					usersPerPage = options.getPageSize();
-					offset = (pageNumber * usersPerPage) - usersPerPage;
-					uriBuilder.addParameter(FILTERTERM, name.getNameValue())
-							.addParameter(LIMIT, String.valueOf(usersPerPage))
-							.addParameter(OFFSET, String.valueOf(offset));
+				uriBuilder.setPath(CRUD);
+				uriBuilder.addParameter(FILTERTERM, name.getNameValue());
+				if (options != null) {
+					if ((options.getPageSize()) != null) {
+						usersPerPage = options.getPageSize();
+						uriBuilder.addParameter(LIMIT, String.valueOf(usersPerPage));
+						if (options.getPagedResultsOffset() != null) {
+							pageNumber = options.getPagedResultsOffset();
+							offset = (pageNumber * usersPerPage) - usersPerPage;
+							uriBuilder.addParameter(OFFSET, String.valueOf(offset));
+						}
+					}
 				}
 				try {
 					uri = uriBuilder.build();
@@ -255,18 +272,21 @@ public class UserHandler extends ObjectsProcessing {
 					throw new ConnectorException(sb.toString(), e);
 				}
 				HttpGet request = new HttpGet(uri);
-				handleUsers(request, handler, options);
+				handleUsers(request, handler, query);
 
 			}
 		} else if (query == null && objectClass.is(ObjectClass.ACCOUNT_NAME)) {
-			if (options == null) {
-				uriBuilder.setPath(CRUD);
-			} else {
-				pageNumber = options.getPagedResultsOffset();
-				usersPerPage = options.getPageSize();
-				offset = (pageNumber * usersPerPage) - usersPerPage;
-				uriBuilder.setPath(CRUD).addParameter(LIMIT, String.valueOf(usersPerPage)).addParameter(OFFSET,
-						String.valueOf(offset));
+			uriBuilder.setPath(CRUD);
+			if (options != null) {
+				if ((options.getPageSize()) != null) {
+					usersPerPage = options.getPageSize();
+					uriBuilder.addParameter(LIMIT, String.valueOf(usersPerPage));
+					if (options.getPagedResultsOffset() != null) {
+						pageNumber = options.getPagedResultsOffset();
+						offset = (pageNumber * usersPerPage) - usersPerPage;
+						uriBuilder.addParameter(OFFSET, String.valueOf(offset));
+					}
+				}
 			}
 			try {
 				uri = uriBuilder.build();
@@ -277,15 +297,31 @@ public class UserHandler extends ObjectsProcessing {
 				throw new ConnectorException(sb.toString(), e);
 			}
 			HttpGet request = new HttpGet(uri);
-			handleUsers(request, handler, options);
+			handleUsers(request, handler, query);
 		}
+		} else {
+		LOGGER.info("YOU", "JOU");
+		uriBuilder.setPath(CRUD);
+		try {
+			uri = uriBuilder.build();
+		} catch (URISyntaxException e) {
+			StringBuilder sb = new StringBuilder();
+			sb.append("It is not possible to create URI from URIBuilder:").append(getURIBuilder().toString())
+					.append(";").append(e.getLocalizedMessage());
+			throw new ConnectorException(sb.toString(), e);
+		}
+		HttpGet request = new HttpGet(uri);
+		handleUsers(request, handler, query);
+		}
+		
 	}
 
-	private boolean handleUsers(HttpGet request, ResultsHandler handler, OperationOptions options) {
+	private boolean handleUsers(HttpGet request, ResultsHandler handler, Filter filter) {
 		if (request == null) {
 			LOGGER.error("Request value not provided {0} ", request);
 			throw new InvalidAttributeValueException("Request value not provided");
 		}
+			
 
 		JSONObject result = callRequest(request);
 		JSONArray users = result.getJSONArray("entries");
@@ -295,15 +331,21 @@ public class UserHandler extends ObjectsProcessing {
 			LOGGER.ok("response body Handle user: {0}", user);
 
 			ConnectorObject connectorObject = convertToConnectorObject(user);
+			
 			boolean finish = !handler.handle(connectorObject);
 			if (finish) {
 				return true;
 			}
 
 		}
+		
+		
+		
 
 		return false;
 	}
+	
+	
 
 	public void delete(ObjectClass objectClass, Uid uid, OperationOptions operationOptions) {
 		LOGGER.ok("delete user, Uid: {0}", uid);
@@ -327,7 +369,6 @@ public class UserHandler extends ObjectsProcessing {
 			LOGGER.error("Attributes not provided {0} ", attributes);
 			return uid;
 		}
-		LOGGER.info("Create", "OK");
 		boolean create = uid == null;
 		JSONObject json = new JSONObject();
 		// required attribute e-mail
@@ -368,14 +409,10 @@ public class UserHandler extends ObjectsProcessing {
 		putFieldIfExists(attributes, ATTR_USED, json);
 		HttpEntityEnclosingRequestBase request = null;
 		URI uri = null;
-		LOGGER.info("Create", "OK");
 		if (create) {
 			try {
-				LOGGER.info("Create", "OK");
 				URIBuilder uriBuilder = getURIBuilder();
-				LOGGER.info("Create", "OK");
 				uri = uriBuilder.setPath(CRUD).build();
-				LOGGER.info("URI {0}", uri);
 			} catch (URISyntaxException e) {
 				StringBuilder sb = new StringBuilder();
 				sb.append("It is not possible to create URI from URIBuilder:").append(getURIBuilder().toString())
@@ -383,7 +420,6 @@ public class UserHandler extends ObjectsProcessing {
 				throw new ConnectorException(sb.toString(), e);
 			}
 			request = new HttpPost(uri);
-			LOGGER.info("Create", "OK");
 		} else {
 			// update
 
@@ -398,7 +434,6 @@ public class UserHandler extends ObjectsProcessing {
 
 			request = new HttpPut(uri);
 		}
-		LOGGER.info("Create", "OK");
 		JSONObject jsonReq = callRequest(request, json);
 
 		String newUid = jsonReq.getString(UID);
@@ -437,7 +472,6 @@ public class UserHandler extends ObjectsProcessing {
 		getAvatarPhoto(json, builder, AVATAR);
 
 		ConnectorObject connectorObject = builder.build();
-		LOGGER.ok("convertUserToConnectorObject,\n\tconnectorObject: {0}", connectorObject);
 		return connectorObject;
 	}
 

@@ -9,6 +9,7 @@ import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.utils.URIBuilder;
 import org.identityconnectors.common.StringUtil;
 import org.identityconnectors.common.logging.Log;
 import org.identityconnectors.framework.common.exceptions.ConnectorException;
@@ -75,6 +76,7 @@ public class FoldersHandler extends ObjectsProcessing {
 			OperationOptions options) {
 		Uid uid = null;
 		URI uri = null;
+		URIBuilder uriBuilder = getURIBuilder();
 		
 		if (query instanceof StartsWithFilter) {
 
@@ -86,8 +88,9 @@ public class FoldersHandler extends ObjectsProcessing {
 
 			uid = (Uid) ((EqualsFilter) query).getAttribute();
 			if (uid != null) {
+				uriBuilder.setPath(CRUD_FOLDER + "/" + uid.getUidValue().toString());
 				try {
-					uri = getURIBuilder().setPath(CRUD_FOLDER + "/" + uid.getUidValue().toString()).build();
+					uri = uriBuilder.build();
 
 				} catch (URISyntaxException e) {
 					StringBuilder sb = new StringBuilder();
@@ -121,8 +124,10 @@ public class FoldersHandler extends ObjectsProcessing {
 
 	private void handlerJson(ResultsHandler handler, Uid uid) {
 		URI uri = null;
+		URIBuilder uriBuilder = getURIBuilder();
+		uriBuilder.setPath(CRUD_FOLDER + "/" + uid.getUidValue().toString());
 		try {
-			uri = getURIBuilder().setPath(CRUD_FOLDER + "/" + uid.getUidValue().toString()).build();
+			uri = uriBuilder.build();
 
 		} catch (URISyntaxException e) {
 			StringBuilder sb = new StringBuilder();
@@ -152,8 +157,10 @@ public class FoldersHandler extends ObjectsProcessing {
 	private boolean substringFiltering(ResultsHandler handler, OperationOptions options, String attrName,
 			String subValue, Uid uid) {
 		URI uri = null;
+		URIBuilder uriBuilder = getURIBuilder();
+		uriBuilder.setPath(CRUD_FOLDER + "/" + uid.getUidValue().toString());
 		try {
-			uri = getURIBuilder().setPath(CRUD_FOLDER + "/" + uid.getUidValue().toString()).build();
+			uri = uriBuilder.build();
 
 		} catch (URISyntaxException e) {
 			StringBuilder sb = new StringBuilder();

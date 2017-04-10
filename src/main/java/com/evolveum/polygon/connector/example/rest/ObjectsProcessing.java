@@ -164,11 +164,14 @@ public class ObjectsProcessing {
 	}
 
 	protected JSONObject callRequest(HttpRequestBase request) {
-
+		LOG.info("SOM TU", "OK");
 		CloseableHttpResponse response = executeRequest(request);
+		LOG.info("SOM TU", "OK");
 		String result = null;
+		LOG.info("SOM TU", "OK");
 		try {
 			result = EntityUtils.toString(response.getEntity());
+			LOG.info("SOM TU", "OK");
 		} catch (org.apache.http.ParseException e) {
 			throw new ConnectorException();
 		} catch (IOException e) {
@@ -176,7 +179,9 @@ public class ObjectsProcessing {
 			throw new ConnectorIOException();
 		}
 		processResponseErrors(response);
+		LOG.info("SOM TU", "OK");
 		return new JSONObject(result);
+		
 
 	}
 
@@ -362,11 +367,14 @@ public class ObjectsProcessing {
 	}
 
 	public CloseableHttpResponse executeRequest(HttpUriRequest request) {
+		LOG.info("SOM TU", "OK");
 		GuardedString accessTokenConf = configuration.getAccessToken();
 		GuardedStringAccessor accessorToken = new GuardedStringAccessor();
 		accessTokenConf.access(accessorToken);
+		LOG.info("SOM TU", "OK");
 		if (accessorToken.getClearString().isEmpty()) {
 			refreshToken();
+			LOG.info("SOM TU", "OK");
 			
 		}
 			
@@ -375,8 +383,10 @@ public class ObjectsProcessing {
 			request.addHeader("Authorization", accessToken);
 			CloseableHttpClient client = HttpClientBuilder.create().build();
 			CloseableHttpResponse response = null;
+			LOG.info("SOM TU", "OK");
 			try {
 				response = client.execute(request);
+				LOG.info("SOM TU", "OK");
 			} catch (IOException e) {
 				StringBuilder sb = new StringBuilder();
 				sb.append("It is not possible to execute request:").append(request.toString()).append(";")

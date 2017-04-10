@@ -65,6 +65,7 @@ import org.identityconnectors.framework.spi.operations.UpdateOp;
  *
  */
 @ConnectorClass(displayNameKey = "Box.connector.display", configurationClass = BoxConnectorConfiguration.class)
+
 public class BoxConnector
 		implements TestOp, SchemaOp, Connector, DeleteOp, SearchOp<Filter>, UpdateOp, CreateOp {
 	
@@ -199,7 +200,7 @@ public class BoxConnector
 		if (query instanceof StartsWithFilter && ((StartsWithFilter) query).getAttribute() instanceof Name) {
 			if (objectClass.is(ObjectClass.ACCOUNT_NAME)) {
 				UserHandler user = new UserHandler(configuration);
-				user.executeCollabQuery(objectClass, query, handler, options);
+				user.executeQuery(objectClass, query, handler, options);
 			} else if (objectClass.is(ObjectClass.GROUP_NAME)) {
 				GroupHandler group = new GroupHandler(configuration);
 				group.executeCollabQuery(objectClass, query, handler, options);
@@ -218,7 +219,7 @@ public class BoxConnector
 		} else if (query instanceof EqualsFilter && ((EqualsFilter) query).getAttribute() instanceof Uid) {
 				if (objectClass.is(ObjectClass.ACCOUNT_NAME)) {
 					UserHandler user = new UserHandler(configuration);
-					user.executeCollabQuery(objectClass, query, handler, options);
+					user.executeQuery(objectClass, query, handler, options);
 				} else if (objectClass.is(ObjectClass.GROUP_NAME)) {
 					GroupHandler group = new GroupHandler(configuration);
 					group.executeCollabQuery(objectClass, query, handler, options);
@@ -236,7 +237,7 @@ public class BoxConnector
 			} else if (query instanceof ContainsFilter && ((ContainsFilter) query).getAttribute() instanceof Name) {
 				if (objectClass.is(ObjectClass.ACCOUNT_NAME)) {
 					UserHandler user = new UserHandler(configuration);
-					user.executeCollabQuery(objectClass, query, handler, options);
+					user.executeQuery(objectClass, query, handler, options);
 				} else if (objectClass.is(ObjectClass.GROUP_NAME)) {
 					GroupHandler group = new GroupHandler(configuration);
 					group.executeCollabQuery(objectClass, query, handler, options);
@@ -255,7 +256,7 @@ public class BoxConnector
 					&& ((ContainsAllValuesFilter) query).getAttribute() instanceof Name) {
 				if (objectClass.is(ObjectClass.ACCOUNT_NAME)) {
 					UserHandler user = new UserHandler(configuration);
-					user.executeCollabQuery(objectClass, query, handler, options);
+					user.executeQuery(objectClass, query, handler, options);
 				} else if (objectClass.is(ObjectClass.GROUP_NAME)) {
 					GroupHandler group = new GroupHandler(configuration);
 					group.executeCollabQuery(objectClass, query, handler, options);
@@ -268,8 +269,10 @@ public class BoxConnector
 				}
 			
 		} else if (query == null && objectClass.is(ObjectClass.ACCOUNT_NAME)) {
+			LOG.info("SOM TU", "OK");
 			UserHandler user = new UserHandler(configuration);
-			user.executeCollabQuery(objectClass, query, handler, options);
+			LOG.info("SOM TU", "OK");
+			user.executeQuery(objectClass, query, handler, options);
 		} else if (query == null && objectClass.is(ObjectClass.GROUP_NAME)) {
 			GroupHandler group = new GroupHandler(configuration);
 			group.executeCollabQuery(objectClass, query, handler, options);

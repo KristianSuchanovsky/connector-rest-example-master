@@ -40,6 +40,7 @@ public class BoxConnectorConfiguration extends AbstractConfiguration implements 
 
 	public BoxConnectorConfiguration() {
 	}
+	
 
 	@ConfigurationProperty(order = 1, displayMessageKey = "ClientId", helpMessageKey = "Client identifier issued to the client during the registration process", required = true, confidential = false)
 
@@ -51,6 +52,7 @@ public class BoxConnectorConfiguration extends AbstractConfiguration implements 
 		this.clientId = clientId;
 	}
 	
+	
 	@ConfigurationProperty(order = 2, displayMessageKey = "ClientSecret", helpMessageKey = "Client secret issued to the client during the registration process", required = true, confidential = false)
 
 	public GuardedString getClientSecret() {
@@ -60,6 +62,7 @@ public class BoxConnectorConfiguration extends AbstractConfiguration implements 
 	public void setClientSecret(GuardedString clientSecret) {
 		this.clientSecret = clientSecret;
 	}
+	
 	
 	@ConfigurationProperty(order = 3, displayMessageKey = "RefreshToken", helpMessageKey = "Refresh token allows you to get new access token", required = true, confidential = false)
 
@@ -71,7 +74,19 @@ public class BoxConnectorConfiguration extends AbstractConfiguration implements 
 		this.refreshToken = refreshToken;
 	}
 	
-	@ConfigurationProperty(order = 4, displayMessageKey = "URI", helpMessageKey = "The HTTP endpoint for Box", required = true, confidential = false)
+	
+	@ConfigurationProperty(order = 4, displayMessageKey = "AccessToken", helpMessageKey = "Access token allows you to execute CRUD operations", required = true, confidential = false)
+	
+	public GuardedString getAccessToken() {
+		return accessToken;
+	}
+	
+	public void setAccessToken(GuardedString accessToken) {
+		this.accessToken = accessToken;
+	}
+	
+	
+	@ConfigurationProperty(order = 5, displayMessageKey = "URI", helpMessageKey = "The HTTP endpoint for Box", required = true, confidential = false)
 
 	public String getUri() {
 		return URI;
@@ -81,13 +96,10 @@ public class BoxConnectorConfiguration extends AbstractConfiguration implements 
 		this.URI = URI;
 	}
 	
-	public GuardedString getAccessToken() {
-		return accessToken;
-	}
 	
-	public void setAccessToken(GuardedString accessToken) {
-		this.accessToken = accessToken;
-	}
+	
+	
+	
 	
 	@Override
 	public void validate() {
@@ -103,6 +115,9 @@ public class BoxConnectorConfiguration extends AbstractConfiguration implements 
         }
         if (null == URI) {
             throw new IllegalArgumentException("URI cannot be null or empty.");
+        }
+        if (null == accessToken) {
+        	throw new IllegalArgumentException("Access Token cannot be null or empty.");
         }
 	}
 	

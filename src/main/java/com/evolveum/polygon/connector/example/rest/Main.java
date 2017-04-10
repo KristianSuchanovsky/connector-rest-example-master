@@ -98,9 +98,11 @@ public class Main {
 		if(response.getStatusLine().getStatusCode() == 200){
 			String refreshToken = (String) json.get("refresh_token");
 			String tokenType = (String) json.get("token_type");
+			String accessToken = (String) json.get("access_token");
 			System.out.println("-------------------------------------------------------------------------------------------");
 			System.out.println("Your Refresh Token: " + refreshToken);
 			System.out.println("Token Type: " + tokenType);
+			System.out.println("Your Access Token: " + accessToken);
 		} else {
 			System.out.println("-------------------------------------------------------------------------------------------");
 			System.out.println("Please Try It Again");

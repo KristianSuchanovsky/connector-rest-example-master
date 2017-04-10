@@ -99,7 +99,7 @@ public class GroupHandler extends ObjectsProcessing {
 		int pageNumber = 0;
 		int usersPerPage = 0;
 		int offset = 0;
-		
+
 		if (query instanceof StartsWithFilter) {
 
 			StringBuilder sb = new StringBuilder();
@@ -130,15 +130,18 @@ public class GroupHandler extends ObjectsProcessing {
 			String attrValue = ((ContainsFilter) query).getAttribute().getValue().get(0).toString();
 			String attrName = getAttrName(query);
 			if (attrValue != null) {
-				if (options == null) {
-					uriBuilder.setPath(CRUD_GROUP);
-				} else {
-					pageNumber = options.getPagedResultsOffset();
-					usersPerPage = options.getPageSize();
-					offset = (pageNumber * usersPerPage) - usersPerPage;
-					uriBuilder.setPath(CRUD_GROUP)
-							.addParameter(LIMIT, String.valueOf(usersPerPage))
-							.addParameter(OFFSET, String.valueOf(offset));
+
+				uriBuilder.setPath(CRUD_GROUP);
+				if (options != null) {
+					if ((options.getPageSize()) != null) {
+						usersPerPage = options.getPageSize();
+						uriBuilder.addParameter(LIMIT, String.valueOf(usersPerPage));
+						if (options.getPagedResultsOffset() != null) {
+							pageNumber = options.getPagedResultsOffset();
+							offset = (pageNumber * usersPerPage) - usersPerPage;
+							uriBuilder.addParameter(OFFSET, String.valueOf(offset));
+						}
+					}
 				}
 				try {
 					uri = uriBuilder.build();
@@ -158,15 +161,18 @@ public class GroupHandler extends ObjectsProcessing {
 			throw new ConnectorException(sb.toString());
 
 		} else if (query == null && objectClass.is(ObjectClass.GROUP_NAME)) {
-			if (options == null) {
-				uriBuilder.setPath(CRUD_GROUP);
-			} else {
-				pageNumber = options.getPagedResultsOffset();
-				usersPerPage = options.getPageSize();
-				offset = (pageNumber * usersPerPage) - usersPerPage;
-				uriBuilder.setPath(CRUD_GROUP)
-						.addParameter(LIMIT, String.valueOf(usersPerPage))
-						.addParameter(OFFSET, String.valueOf(offset));
+
+			uriBuilder.setPath(CRUD_GROUP);
+			if (options != null) {
+				if ((options.getPageSize()) != null) {
+					usersPerPage = options.getPageSize();
+					uriBuilder.addParameter(LIMIT, String.valueOf(usersPerPage));
+					if (options.getPagedResultsOffset() != null) {
+						pageNumber = options.getPagedResultsOffset();
+						offset = (pageNumber * usersPerPage) - usersPerPage;
+						uriBuilder.addParameter(OFFSET, String.valueOf(offset));
+					}
+				}
 			}
 			try {
 				uri = uriBuilder.build();

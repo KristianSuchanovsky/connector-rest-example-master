@@ -20,15 +20,18 @@ import org.identityconnectors.framework.common.objects.filter.ContainsFilter;
 import org.identityconnectors.framework.common.objects.filter.EqualsFilter;
 import org.identityconnectors.framework.common.objects.filter.FilterBuilder;
 import org.identityconnectors.framework.common.objects.filter.StartsWithFilter;
+import org.identityconnectors.framework.impl.api.local.operations.FilteredResultsHandler;
 import org.identityconnectors.framework.spi.SearchResultsHandler;
 import org.junit.Test;
 
 import com.evolveum.polygon.connector.example.rest.BoxConnectorConfiguration;
+import com.evolveum.polygon.connector.example.rest.UserHandler;
 import com.evolveum.polygon.connector.example.rest.BoxConnector;
 
 
 public class BoxRestConnectorTest {
 	
+	private static final ArrayList<ConnectorObject> results = new ArrayList<>();
 	private static final Log LOG = Log.getLog(BoxConnector.class);
 	 public static SearchResultsHandler handler = new SearchResultsHandler() {
 
@@ -44,15 +47,15 @@ public class BoxRestConnectorTest {
 			
 		}
 		 };
-		 private static final ArrayList<ConnectorObject> results = new ArrayList<>();
+		 
 	@Test
 		public void aFastTest()  {
 		 BoxConnector connector = new BoxConnector();
 		 BoxConnectorConfiguration conf =new BoxConnectorConfiguration();
 		
 		 GuardedString clientSecret = new GuardedString(new String("L9SzKgeLU28jFzmmhYEAabqxEWTmcDT4").toCharArray());
-		 GuardedString refreshToken = new GuardedString(new String("nscvBWpqJZO8wsu9a8wVZNDxK6umqKpSq7aCihp3WrcguOxWcCsYSG3oBJEOsiXi").toCharArray());
-		 GuardedString accessToken = new GuardedString(new String("siSQ5QAYkIWeVcqMnHxqwu9GKZdR1cUh").toCharArray());
+		 GuardedString refreshToken = new GuardedString(new String("KuNR3ufxGGTcFh6WVc6gBalU6iQliBepFowxizJkj7d95Z4QuuSh0pToQoc49IlB").toCharArray());
+		 GuardedString accessToken = new GuardedString(new String("AHcQnbXLlXNBo1VJd1LhEZIcOWPhU24H").toCharArray());
 	
 		 /*ObjectClass object = new ObjectClass("Collaborations");
 		 Set<Attribute> attributes = new HashSet<Attribute>();
@@ -67,26 +70,26 @@ public class BoxRestConnectorTest {
 		 attributes.add(AttributeBuilder.build("parent.id","22218821104"));
 		 attributes.add(AttributeBuilder.build("__NAME__", "ESET"));*/
 		 
-		 /*ObjectClass object = new ObjectClass("__ACCOUNT__");
+		 ObjectClass object = new ObjectClass("__ACCOUNT__");
 		 Set<Attribute> attributes = new HashSet<Attribute>();
-		 attributes.add(AttributeBuilder.build("login","Miro@evo.com"));
-		 attributes.add(AttributeBuilder.build("__NAME__", "Miro Evolveum"));*/
+		 attributes.add(AttributeBuilder.build("login","Kubo@evo.com"));
+		 attributes.add(AttributeBuilder.build("__NAME__", "Kubo Evolveum"));
 		 
-		 ObjectClass object = new ObjectClass("__GROUP__");
+		 /*ObjectClass object = new ObjectClass("__GROUP__");
 		 Set<Attribute> attributes = new HashSet<Attribute>();
-		 attributes.add(AttributeBuilder.build("__NAME__", "EastcubatorGroup"));
+		 attributes.add(AttributeBuilder.build("__NAME__", "EastcubatorGroup"));*/
 		 
 		 /*ObjectClass object = new ObjectClass("Membership");
 		 Set<Attribute> attributes = new HashSet<Attribute>();
-		 attributes.add(AttributeBuilder.build("user.id", "1311377537"));
+		 attributes.add(AttributeBuilder.build("user.id", "1288909013"));
 		 attributes.add(AttributeBuilder.build("group.id", "143246148"));
 		 attributes.add(AttributeBuilder.build("role", "admin"));*/
 		 
-		 Map operationOptions = new HashMap();
+		 /*Map operationOptions = new HashMap();
 		 operationOptions.put("ALLOW_PARTIAL_ATTRIBUTE_VALUES", true);  
 		 operationOptions.put(OperationOptions.OP_PAGED_RESULTS_OFFSET, 1);  
 		 operationOptions.put(OperationOptions.OP_PAGE_SIZE, 3);  
-		 OperationOptions options = new OperationOptions(operationOptions);
+		 OperationOptions options = new OperationOptions(operationOptions);*/
 		
 		 conf.setClientId("4ig3tzk76msrvvvpradguxsxuz7lsuhr");
 		 conf.setClientSecret(clientSecret);
@@ -95,7 +98,7 @@ public class BoxRestConnectorTest {
 		 conf.setAccessToken(accessToken);
 		 
 		 
-		 connector.init(conf);
+		 	connector.init(conf);
 		 // connector.test();
 		 // folder Ceresnicka Id 21731126767
 		 // folder Eastcubator Id 21735961057
@@ -109,23 +112,32 @@ public class BoxRestConnectorTest {
 		 // folder FOLDER Id 22218821104
 		 // folder ESET Id 22218922123
 		 // collab Matus - 21.03.2017 Id 3793668509
-		 // member Matus - EastcubatorGroup Id 1163197315
+		 // member Matus - EastcubatorGroup Id 1248602229
 		 // Uid uid = new Uid("1163197315");
 		 // connector.update(object,uid , attributes, null);
 		 // connector.create(object, attributes, null);
 		 // connector.delete(object, uid, null);
 		 
-		AttributeFilter swfilter = (StartsWithFilter) FilterBuilder.startsWith(AttributeBuilder.build("__NAME__", "F"));
-		//connector.executeQuery(object, swfilter, handler, options);
-		connector.executeQuery(object, null, handler, null);
-
-		/*AttributeFilter eqfilter = (EqualsFilter) FilterBuilder.equalTo(AttributeBuilder.build("__UID__", " "));
+			 
+		AttributeFilter swfilter = (StartsWithFilter) FilterBuilder.startsWith(AttributeBuilder.build("__NAME__", "K"));
+		connector.executeQuery(object, swfilter, handler, null);
+		
+		 /*AttributeFilter eqfilter = (EqualsFilter) FilterBuilder.equalTo(AttributeBuilder.build("__UID__", " "));
 		connector.executeQuery(object, eqfilter, handler, null);*/
 		
-		/*AttributeFilter cofilter = (ContainsFilter) FilterBuilder.contains(AttributeBuilder.build("__NAME__", "E"));
-		connector.executeQuery(object, cofilter, handler, null);*/
-		
-		  }
+		/*AttributeFilter cofilter = (ContainsFilter) FilterBuilder.contains(AttributeBuilder.build("__NAME__", "s"));
+		FilteredResultsHandler filteredHandler = new FilteredResultsHandler(handler, cofilter);
+		connector.executeQuery(object, null, filteredHandler, null);*/
+	
+		//connector.executeQuery(object, cofilter, handler, null);*/
+		System.out.println("result size : " + String.valueOf(results.size()));
+		for(ConnectorObject objectsa: results ){
+			
+			System.out.println("Connector Objects *****: " + objectsa.toString());
+			
+		}
+		 
+		 }
 	
 
 }
